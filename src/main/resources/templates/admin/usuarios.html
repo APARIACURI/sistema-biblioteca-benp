@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{_layout}">
+<head>
+    <title>Usuarios</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="text-2xl font-black text-[#5D4037] mb-6">Usuarios registrados</h2>
+
+    <div class="bg-white rounded-2xl shadow overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-[#FFF3E0] text-[#5D4037] text-left">
+            <tr>
+                <th class="p-4">ID</th>
+                <th class="p-4">Nombre</th>
+                <th class="p-4">Apellido</th>
+                <th class="p-4">Correo</th>
+                <th class="p-4">Número</th>
+                <th class="p-4">DNI</th>
+                <th class="p-4">Tipo</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="usuario : ${usuarios}" class="border-t hover:bg-gray-50">
+                <td class="p-4" th:text="${usuario.id}">1</td>
+                <td class="p-4 font-bold" th:text="${usuario.nombre}">Nombre</td>
+                <td class="p-4" th:text="${usuario.apellido}">Apellido</td>
+                <td class="p-4" th:text="${usuario.correo}">correo@ejemplo.com</td>
+                <td class="p-4" th:text="${usuario.numero}">000000000</td>
+                <td class="p-4" th:text="${usuario.dni}">00000000</td>
+                <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700"
+                              th:text="${usuario.tipoUsuario}">tipo</span>
+                </td>
+            </tr>
+            <tr th:if="${usuarios.isEmpty()}">
+                <td colspan="7" class="p-6 text-center text-gray-400 font-bold">No hay usuarios registrados.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

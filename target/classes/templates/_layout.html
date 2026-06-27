@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - BENP Admin">Panel Admin - BENP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background:#f5fff5; }
+        .nav-link.active { background: rgba(244, 242, 112, 0.15); }
+    </style>
+</head>
+<body>
+<div class="flex min-h-screen">
+    <!-- ===== Barra lateral comun a todas las paginas del admin ===== -->
+    <aside class="w-64 bg-[#5D4037] text-white p-6 flex flex-col gap-1 shrink-0">
+        <h1 class="text-xl font-black mb-8">📚 BENP <span class="opacity-60 font-normal">Administrador</span></h1>
+        <a th:href="@{/admin/multas}" class="nav-link py-2 px-3 rounded-lg hover:bg-white/10 font-semibold">Inicio</a>
+        <a th:href="@{/admin}" class="nav-link py-2 px-3 rounded-lg hover:bg-white/10 font-semibold">Dashboard</a>
+        <a th:href="@{/admin/libros}" class="nav-link py-2 px-3 rounded-lg hover:bg-white/10 font-semibold">Libros</a>
+        <a th:href="@{/admin/usuarios}" class="nav-link py-2 px-3 rounded-lg hover:bg-white/10 font-semibold">Usuarios</a>
+        <a th:href="@{/admin/prestamos}" class="nav-link py-2 px-3 rounded-lg hover:bg-white/10 font-semibold">Préstamos</a>
+        <a th:href="@{/admin/multas}" class="nav-link py-2 px-3 rounded-lg hover:bg-white/10 font-semibold">Multas</a>
+        <a th:href="@{/}" class="mt-auto py-2 px-3 rounded-lg hover:bg-white/10 text-sm opacity-70">← Volver al sitio</a>
+    </aside>
+
+    <!-- ===== Contenido especifico de cada pagina ===== -->
+    <main class="flex-1 p-8 overflow-x-auto">
+        <div layout:fragment="content">
+            <!-- Cada vista (dashboard, libros, usuarios, ...) reemplaza este bloque -->
+        </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
