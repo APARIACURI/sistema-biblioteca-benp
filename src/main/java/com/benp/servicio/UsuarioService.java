@@ -1,5 +1,6 @@
 package com.benp.servicio;
 
+import com.benp.dto.UsuarioRegistroDTO;
 import com.benp.excepcion.UsuarioDuplicadoException;
 import com.benp.modelo.Usuario;
 import com.benp.repositorio.UsuarioRepository;
@@ -23,19 +24,30 @@ public class UsuarioService {
 
     // Equivalente a UsuarioDAO.registrarUsuario(...), validando duplicados igual
     // que antes se validaba el codigo de error 1062 de MySQL.
-    public Usuario registrar(Usuario usuario) {
-        if (usuarioRepository.existsByCorreo(usuario.getCorreo())) {
+    // Recibe un DTO (no la entidad Usuario) para que el cliente NO pueda mandar
+    // "tipoUsuario":"admin" ni un "id" propio en el JSON (mass assignment).
+    public Usuario registrar(UsuarioRegistroDTO datos) {
+        if (usuarioRepository.existsByCorreo(datos.getCorreo())) {
             throw new UsuarioDuplicadoException("El correo electronico ingresado ya esta registrado.");
         }
-        if (usuarioRepository.existsByDni(usuario.getDni())) {
+        if (usuarioRepository.existsByDni(datos.getDni())) {
             throw new UsuarioDuplicadoException("El numero de DNI ingresado ya esta registrado.");
         }
-        if (usuarioRepository.existsByNumero(usuario.getNumero())) {
+        if (usuarioRepository.existsByNumero(datos.getNumero())) {
             throw new UsuarioDuplicadoException("El numero de celular ingresado ya esta registrado.");
         }
 
-        usuario.setId(null);
-        usuario.setClave(BCrypt.hashpw(usuario.getClave(), BCrypt.gensalt()));
+        Usuario usuario = new Usuario();
+        usuario.setNombre(datos.getNombre());
+        usuario.setApellido(datos.getApellido());
+        usuario.setCorreo(datos.getCorreo());
+        usuario.setNumero(datos.getNumero());
+        usuario.setDni(datos.getDni());
+        usuario.setApodo(datos.getApodo());
+        usuario.setClave(BCrypt.hashpw(datos.getClave(), BCrypt.gensalt()));
+        // El tipo de usuario SIEMPRE se fija en el backend, nunca lo decide el cliente.
+        usuario.setTipoUsuario("estudiante");
+
         return usuarioRepository.save(usuario);
     }
 

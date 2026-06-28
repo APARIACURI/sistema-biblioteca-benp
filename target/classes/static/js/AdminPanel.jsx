@@ -12,6 +12,10 @@ const AdminPanel = ({
     searchQuery, setSearchQuery,
     selectedCategory, setSelectedCategory,
     categories, filteredBooks,
+
+    // VARIABLES DEL CRUD DE CATEGORÍAS (interactúan con la BD vía /api/categorias)
+    categoriasFiltradas, handleAddCategory, handleDeleteCategory,
+    categorySearchTerm, handleBuscarCategoria,
     
     // VARIABLES DEL MODAL DE EDICIÓN (
     showEditBookModal, setShowEditBookModal,
@@ -43,15 +47,17 @@ const AdminPanel = ({
     <aside className="w-64 bg-[#F5F1E3] border-r border-[#D4CDB3] p-8 flex flex-col sticky top-16 h-[calc(100vh-4rem)] shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 mb-10 mt-2">
                     <i data-lucide="shield-check" className="text-[#8B7355] w-6 h-6"></i>
-                    <span className="font-black text-[#5D4037] tracking-tight text-sm uppercase">ADMIN PANEL</span>
+                    <span className="font-black text-[#5D4037] tracking-tight text-sm uppercase">PANEL</span>
                 </div>
                 <nav className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-2">
                     {[
                         { id: 'overview', label: 'Resumen', icon: 'layout-dashboard' }, 
                         { id: 'libros', label: 'Libros', icon: 'book-open' }, 
-                        { id: 'préstamos', label: 'Préstamos Activos', icon: 'refresh-cw' }, 
-                        { id: 'historial', label: 'Historial', icon: 'history' },
-                        { id: 'multas', label: 'Gestión Multas', icon: 'alert-triangle' } 
+                        { id: 'préstamos', label: 'Préstamos', icon: 'refresh-cw' },
+                        { id: 'Categorias', label: 'Categorías', icon: 'tag' },
+                        { id: 'editoriales', label: 'Editoriales', icon: 'book' }, 
+                        { id: 'multas', label: 'Multas', icon: 'alert-triangle' },
+                        { id: 'Reportes', label: 'Reportes', icon: 'file-text' }
                     ].map(item => (
                         <button key={item.id} onClick={() => setAdminSubView(item.id)} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminSubView === item.id ? 'bg-[#8B7355] text-white shadow-lg' : 'text-[#5D4037] hover:bg-[#E2D6B2]'}`}>
                             <i data-lucide={item.icon} className="w-4 h-4"></i> {item.label}
@@ -69,7 +75,7 @@ const AdminPanel = ({
             <div className="flex-1 p-10 lg:p-16 overflow-x-hidden">
                 <div className="flex justify-between items-center mb-12 border-b border-gray-200 pb-6">
                     <h2 className="text-4xl font-black text-[#5D4037] uppercase tracking-tighter">{adminSubView === 'overview' ? 'Resumen General' : adminSubView}</h2>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Panel de Control de Almacén</p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Vista</p>
                 </div>
                 
                 {/*   VISTA: RESUMEN (OVERVIEW)   */}
@@ -161,7 +167,7 @@ const AdminPanel = ({
                 >
                     <option value="Todos">Todas las Categorías</option>
                     {categories.map(c => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                        <option key={c.id} value={c.nombre}>{c.nombre}</option>
                     ))}
                 </select>
             </div>
@@ -339,8 +345,8 @@ const AdminPanel = ({
                             className="w-full p-4 border-2 rounded-xl font-bold bg-white"
                         >
                             {categories.map(c => (
-                                <option key={c.id} value={c.name}>
-                                    {c.name}
+                                <option key={c.id} value={c.nombre}>
+                                    {c.nombre}
                                 </option>
                             ))}
                         </select>
@@ -487,6 +493,119 @@ const AdminPanel = ({
                         </table>
                     </div>
                 )}
+
+                {/* VISTA: CATEGORÍAS */}
+                {adminSubView === 'Categorias' && (
+                    <div className="space-y-6 animate-fade-in">
+
+                        {/* FORMULARIO AGREGAR */}
+                        <div className="bg-white p-6 rounded-[2rem] border shadow-sm">
+                            <h3 className="font-black text-[#5D4037] uppercase text-sm mb-4">
+                                Nueva Categoría
+                            </h3>
+
+                            <form 
+                                onSubmit={handleAddCategory} 
+                                className="flex flex-col md:flex-row gap-4"
+                            >
+                                <input 
+                                    type="text" 
+                                    name="nombre" 
+                                    placeholder="Nombre"
+                                    required
+                                    className="flex-1 p-4 border-2 rounded-xl font-bold"
+                                />
+
+                                <input 
+                                    type="text" 
+                                    name="descripcion" 
+                                    placeholder="Descripción"
+                                    className="flex-1 p-4 border-2 rounded-xl font-bold"
+                                />
+
+                                <select 
+                                    name="estado"
+                                    className="p-4 border-2 rounded-xl font-bold bg-white"
+                                >
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+
+                                <button 
+                                    type="submit"
+                                    className="px-6 py-4 bg-[#8B7355] text-white font-black rounded-xl"
+                                >
+                                    Guardar
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* BUSCADOR (consulta directamente la BD vía /api/categorias/buscar) */}
+                        <div className="bg-white p-6 rounded-[2rem] border shadow-sm">
+                            <div className="relative">
+                                <i data-lucide="search" className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input
+                                    type="text"
+                                    value={categorySearchTerm}
+                                    onChange={(e) => handleBuscarCategoria(e.target.value)}
+                                    placeholder="Buscar categoría por nombre..."
+                                    className="w-full pl-12 p-4 border-2 border-[#E2D6B2] focus:border-[#8B7355] outline-none rounded-xl font-bold"
+                                />
+                            </div>
+                        </div>
+
+                        {/* TABLA DE CATEGORÍAS */}
+                        <div className="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
+                            <table className="w-full">
+                                <thead className="bg-[#F5F1E3] text-xs font-black uppercase text-[#8B7355]">
+                                    <tr>
+                                        <th className="p-6 text-left">Nombre</th>
+                                        <th className="p-6 text-left">Descripción</th>
+                                        <th className="p-6 text-left">Estado</th>
+                                        <th className="p-6 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody className="divide-y">
+                                    {categoriasFiltradas.map(cat => (
+                                        <tr key={cat.id} className="text-sm hover:bg-gray-50">
+                                            <td className="p-6 font-bold">{cat.nombre}</td>
+                                            <td className="p-6 text-gray-500">{cat.descripcion}</td>
+                                            <td className="p-6">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-black 
+                                                    ${cat.estado === 'Activo' 
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : 'bg-gray-200 text-gray-600'}`}>
+                                                    {cat.estado}
+                                                </span>
+                                            </td>
+
+                                            <td className="p-6 text-center">
+                                                <button 
+                                                    onClick={() => handleDeleteCategory(cat.id)}
+                                                    className="px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-bold"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+
+                                    {categoriasFiltradas.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" className="p-10 text-center text-gray-400">
+                                                {categorySearchTerm ? "No se encontraron categorías con ese nombre." : "No hay categorías registradas."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                )}
+
+
             </div>
         </div>
     );

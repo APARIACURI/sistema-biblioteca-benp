@@ -4,6 +4,9 @@ import com.benp.servicio.LibroService;
 import com.benp.servicio.MultaService;
 import com.benp.servicio.PrestamoService;
 import com.benp.servicio.UsuarioService;
+import com.benp.servicio.CategoriaService;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +18,15 @@ import org.springframework.web.bind.annotation.*;
 public class AdminViewController {
 
     private final LibroService libroService;
+    private final CategoriaService categoriaService;            
     private final UsuarioService usuarioService;
     private final PrestamoService prestamoService;
     private final MultaService multaService;
 
     public AdminViewController(LibroService libroService, UsuarioService usuarioService,
-                                PrestamoService prestamoService, MultaService multaService) {
+                                PrestamoService prestamoService, MultaService multaService, CategoriaService categoriaService) {
         this.libroService = libroService;
+        this.categoriaService = categoriaService;
         this.usuarioService = usuarioService;
         this.prestamoService = prestamoService;
         this.multaService = multaService;
@@ -75,5 +80,11 @@ public class AdminViewController {
     public String pagarMulta(@PathVariable Integer id) {
         multaService.marcarComoPagada(id);
         return "redirect:/admin/multas";
+    }
+
+    @GetMapping("/categorias")
+    public String categorias(Model model) {
+        model.addAttribute("categorias", categoriaService.listar());
+        return "admin/categorias";
     }
 }

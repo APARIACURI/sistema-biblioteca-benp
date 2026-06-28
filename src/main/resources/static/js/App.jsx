@@ -52,12 +52,14 @@ const MainApp = () => {
     const [showAddBookModal, setShowAddBookModal] = useState(false);
     const [tiempoPrestamo, setTiempoPrestamo] = useState('1_semana');
 
-    const categories = [
-        { id: 1, name: 'Historias', icon: '📜' }, { id: 2, name: 'Novelas', icon: '📘' },
-        { id: 3, name: 'Revistas', icon: '📰' }, { id: 4, name: 'Educativos', icon: '🎓' },
-        { id: 5, name: 'Poesía', icon: '🖋️' }, { id: 6, name: 'Cuentos', icon: '📖' },
-        { id: 7, name: 'Teatro', icon: '🎭' }, { id: 8, name: 'Religiosos', icon: '⛪' }
-    ];
+    // Las categorias ahora viven en la base de datos (tabla "categorias",
+    // CRUD via /api/categorias). Antes era un arreglo fijo en el código y
+    // por eso el menú "Categorías" del panel admin no hacía nada real.
+    const [categories, setCategories] = useState([]);
+    // Lista que se muestra en la tabla del panel admin (puede ser un subconjunto
+    // cuando el admin está buscando por nombre).
+    const [categoriasFiltradas, setCategoriasFiltradas] = useState([]);
+    const [categorySearchTerm, setCategorySearchTerm] = useState("");
 
     const [booksList, setBooksList] = useState([]);
     const [allLoans, setAllLoans] = useState([]);
@@ -77,6 +79,67 @@ const MainApp = () => {
             }).catch(() => {});
             
         fetch(`${API_BASE_URL}/api/multas`).then(res => res.json()).then(setFines).catch(() => {});
+
+        cargarCategorias();
+    };
+
+    // Trae el listado completo de categorías desde la BD (tabla "categorias")
+    // y refresca tanto el listado "maestro" (selects, filtros del catálogo)
+    // como la tabla del panel admin.
+    const cargarCategorias = () => {
+        fetch(`${API_BASE_URL}/api/categorias`)
+            .then(res => res.json())
+            .then(data => { setCategories(data); setCategoriasFiltradas(data); setCategorySearchTerm(""); })
+            .catch(() => {});
+    };
+
+    // Registrar una nueva categoría (POST /api/categorias)
+    const handleAddCategory = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const nuevaCategoria = {
+            nombre: formData.get('nombre'),
+            descripcion: formData.get('descripcion'),
+            estado: formData.get('estado')
+        };
+
+        fetch(`${API_BASE_URL}/api/categorias`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevaCategoria)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("No se pudo guardar la categoría en la base de datos.");
+            return res.json();
+        })
+        .then(() => {
+            e.target.reset();
+            cargarCategorias();
+        })
+        .catch(err => alert(err.message));
+    };
+
+    // Eliminar una categoría existente (DELETE /api/categorias/{id})
+    const handleDeleteCategory = (id) => {
+        if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
+
+        fetch(`${API_BASE_URL}/api/categorias/${id}`, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error("No se pudo eliminar la categoría.");
+                cargarCategorias();
+            })
+            .catch(err => alert(err.message));
+    };
+
+    // Buscar categorías por nombre (GET /api/categorias/buscar?nombre=...)
+    // Si el texto queda vacío, vuelve a traer el listado completo.
+    const handleBuscarCategoria = (texto) => {
+        setCategorySearchTerm(texto);
+        const url = texto.trim() === ""
+            ? `${API_BASE_URL}/api/categorias`
+            : `${API_BASE_URL}/api/categorias/buscar?nombre=${encodeURIComponent(texto.trim())}`;
+
+        fetch(url).then(res => res.json()).then(setCategoriasFiltradas).catch(() => {});
     };
 
     useEffect(() => { cargarDatosDesdeBD(); }, []);
@@ -274,6 +337,13 @@ const handleLogin = (e) => {
         setSelectedCategory={setSelectedCategory}
         categories={categories}
         filteredBooks={filteredBooks}
+
+        // Propiedades del CRUD de Categorías (interactúan con la BD)
+        categoriasFiltradas={categoriasFiltradas}
+        handleAddCategory={handleAddCategory}
+        handleDeleteCategory={handleDeleteCategory}
+        categorySearchTerm={categorySearchTerm}
+        handleBuscarCategoria={handleBuscarCategoria}
         
         // Propiedades críticas del modal de edición
         showEditBookModal={showEditBookModal}
@@ -376,7 +446,7 @@ const handleLogin = (e) => {
                             <div className="flex justify-between items-center mb-12 gap-6">
                                 <h2 className="text-3xl font-black text-[#5D4037] uppercase">Catálogo General</h2>
                                 <div className="flex gap-2 overflow-x-auto pb-4 custom-scrollbar">
-                                    {["Todos", ...categories.map(c => c.name)].map(cat => (
+                                    {["Todos", ...categories.map(c => c.nombre)].map(cat => (
                                         <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase ${selectedCategory === cat ? 'bg-[#8B7355] text-white' : 'bg-white text-[#8B7355] border'}`}>{cat}</button>
                                     ))}
                                 </div>
@@ -439,7 +509,7 @@ const handleLogin = (e) => {
                             <div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Título del Libro (TITULO)</label><input name="titulo" required className="w-full p-4 border-2 rounded-xl font-bold" /></div>
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">ISBN (ISBN)</label><input name="isbn" placeholder="978-x-xxx-xxxx-x" className="w-full p-4 border-2 rounded-xl font-bold" /></div><div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Año de publicación</label><input name="anio" type="number" placeholder="2026" className="w-full p-4 border-2 rounded-xl font-bold" /></div></div>
                             <div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Autor (ID_AUTOR)</label><input name="autor" required placeholder="Nombre del autor..." className="w-full p-4 border-2 rounded-xl font-bold" /></div>
-                            <div className="grid grid-cols-2 gap-4 mb-6"><div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Categoría (ID_CATEGORIA)</label><select name="categoria" className="w-full p-4 border-2 rounded-xl font-bold">{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div><div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Editorial (ID_EDITORIAL)</label><input name="editorial" placeholder="Ej. Editorial UTP" className="w-full p-4 border-2 rounded-xl font-bold" /></div></div>
+                            <div className="grid grid-cols-2 gap-4 mb-6"><div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Categoría (ID_CATEGORIA)</label><select name="categoria" className="w-full p-4 border-2 rounded-xl font-bold">{categories.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}</select></div><div><label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Editorial (ID_EDITORIAL)</label><input name="editorial" placeholder="Ej. Editorial UTP" className="w-full p-4 border-2 rounded-xl font-bold" /></div></div>
                             <div className="flex gap-4 pt-6 border-t"><button type="button" onClick={() => setShowAddBookModal(false)} className="flex-1 py-4 border-2 text-gray-500 font-black rounded-xl uppercase tracking-widest text-xs">Descartar</button><button type="submit" className="flex-1 py-4 bg-[#1A1A1A] text-white font-black rounded-xl shadow-xl uppercase tracking-widest text-xs hover:bg-black">Insert Into Libros</button></div>
                         </div>
                     </form>
@@ -511,7 +581,7 @@ const handleLogin = (e) => {
                     <div className="col-span-1">
                         <label className="text-[10px] font-black uppercase text-[#8B7355] mb-1 block">Categoría</label>
                         <select name="categoria" defaultValue={bookToEdit.categoria} className="w-full p-4 border-2 rounded-xl font-bold bg-white">
-                            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            {categories.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
                         </select>
                     </div>
                     <div className="col-span-1">

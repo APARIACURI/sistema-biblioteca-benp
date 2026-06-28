@@ -1,5 +1,7 @@
 package com.benp.controlador;
 
+import com.benp.dto.UsuarioRegistroDTO;
+import com.benp.dto.UsuarioResponseDTO;
 import com.benp.excepcion.UsuarioDuplicadoException;
 import com.benp.modelo.Usuario;
 import com.benp.servicio.UsuarioService;
@@ -24,12 +26,13 @@ public class UsuarioRestController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, String>> registrar(@RequestBody Usuario nuevoUsuario) {
+    public ResponseEntity<Map<String, Object>> registrar(@RequestBody UsuarioRegistroDTO datos) {
         try {
-            usuarioService.registrar(nuevoUsuario);
+            Usuario creado = usuarioService.registrar(datos);
             return ResponseEntity.ok(Map.of(
                     "mensaje", "Usuario registrado correctamente",
-                    "status", "success"));
+                    "status", "success",
+                    "usuario", UsuarioResponseDTO.desde(creado)));
         } catch (UsuarioDuplicadoException e) {
             // Equivalente al HTTP 409 Conflict que devolvia el servlet original
             return ResponseEntity.status(HttpStatus.CONFLICT)
