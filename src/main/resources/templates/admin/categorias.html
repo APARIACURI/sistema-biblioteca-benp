@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Categorías</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+    <header>
+        <h1>Administración de Categorías</h1>
+        <nav>
+            <a th:href="@{/admin}">Panel de Control</a> |
+            <a th:href="@{/admin/categorias/nuevo}">Agregar Categoría</a>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <h2>Listado de Categorías</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="categoria : ${categorias}">
+                        <td th:text="${categoria.id}">1</td>
+                        <td th:text="${categoria.nombre}">Nombre categoría</td>
+                        <td th:text="${categoria.descripcion}">Descripción de categoría</td>
+                        <td>
+                            <a th:href="@{|/admin/categorias/editar/${categoria.id}|}">Editar</a>
+                            <a th:href="@{|/admin/categorias/eliminar/${categoria.id}|}"
+                               th:onclick="return confirm('¿Eliminar esta categoría?');">Eliminar</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(categorias)}">
+                        <td colspan="4">No hay categorías registradas.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>

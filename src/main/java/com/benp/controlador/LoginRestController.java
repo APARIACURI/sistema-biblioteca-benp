@@ -1,6 +1,7 @@
 package com.benp.controlador;
 
 import com.benp.dto.CredencialesDTO;
+import com.benp.dto.UsuarioResponseDTO;
 import com.benp.modelo.Usuario;
 import com.benp.servicio.UsuarioService;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,8 @@ public class LoginRestController {
         Usuario usuarioAutenticado = usuarioService.autenticar(creds.getCorreo(), creds.getClave());
 
         if (usuarioAutenticado != null) {
-            return ResponseEntity.ok(usuarioAutenticado);
+            // Nunca se devuelve el hash de la clave al cliente
+            return ResponseEntity.ok(UsuarioResponseDTO.desde(usuarioAutenticado));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("mensaje", "Credenciales incorrectas"));
